@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>MANIFESTACIÓN | El Arquitecto de Realidades</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Montserrat:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --luz: #f3e5ab;
+            --azul-etereo: #000428;
+            --oro-blanco: #e5e5e5;
+            --respiracion: rgba(243, 229, 171, 0.2);
+        }
+
+        body {
+            background: radial-gradient(circle at center, #004e92 0%, var(--azul-etereo) 100%);
+            color: var(--oro-blanco);
+            font-family: 'Montserrat', sans-serif;
+            height: 100vh; margin: 0;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        #canvas-manifestacion { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 5; }
+
+        #templo {
+            text-align: center; z-index: 10; padding: 40px; width: 85%; max-width: 700px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(243, 229, 171, 0.1);
+            transition: all 2s ease;
+        }
+
+        h1 {
+            font-family: 'Cinzel Decorative', cursive;
+            font-size: 2.2rem; letter-spacing: 10px; margin: 0;
+            color: var(--luz); text-shadow: 0 0 20px var(--luz);
+        }
+
+        #decreto-input {
+            background: transparent; border: none;
+            border-bottom: 1px solid var(--luz);
+            color: white; font-size: 1.6rem; text-align: center;
+            width: 90%; margin: 40px 0; outline: none;
+            font-family: 'Montserrat', sans-serif; font-weight: 300;
+        }
+
+        .btn-manifestar {
+            background: transparent; border: 1px solid var(--luz);
+            color: var(--luz); padding: 15px 40px;
+            font-family: 'Cinzel Decorative', cursive;
+            letter-spacing: 4px; cursor: pointer; transition: 0.5s;
+        }
+
+        .btn-manifestar:hover {
+            background: var(--luz); color: black;
+            box-shadow: 0 0 30px var(--luz);
+        }
+
+        #guia-respiracion {
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            border: 2px solid var(--respiracion);
+            margin: 30px auto;
+            display: none;
+            align-items: center; justify-content: center;
+            position: relative;
+        }
+
+        .animar-respiracion {
+            animation: inhalar-exhalar 8s infinite ease-in-out;
+        }
+
+        @keyframes inhalar-exhalar {
+            0%, 100% { transform: scale(0.8); background: transparent; }
+            50% { transform: scale(1.2); background: var(--respiracion); }
+        }
+
+        #timer { font-family: 'Cinzel Decorative'; font-size: 1.5rem; color: var(--luz); }
+        .ocultar { opacity: 0; pointer-events: none; transform: translateY(20px); }
+        #frase-anclada { font-size: 2rem; font-style: italic; color: white; display: none; margin-bottom: 20px; }
+        
+        #cierre-maestro {
+            font-family: 'Cinzel Decorative';
+            font-size: 1.4rem;
+            color: var(--luz);
+            display: none;
+            line-height: 1.8;
+            letter-spacing: 3px;
+            animation: aparecer 4s ease;
+        }
+
+        @keyframes aparecer { from { opacity: 0; filter: blur(10px); } to { opacity: 1; filter: blur(0); } }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas-manifestacion"></canvas>
+
+    <div id="templo">
+        <div id="contenido-input">
+            <h1>MANIFESTACIÓN</h1>
+            <p style="opacity: 0.6; margin-top: 10px; letter-spacing: 2px;">EL ARQUITECTO DE REALIDADES</p>
+            <input type="text" id="decreto-input" placeholder="Yo soy..." autocomplete="off">
+            <br>
+            <button class="btn-manifestar" onclick="iniciarManifestacion()">ANCLAR Y ENFOCAR</button>
+        </div>
+
+        <div id="fase-enfoque">
+            <div id="frase-anclada"></div>
+            <div id="guia-respiracion">
+                <div id="timer">05:00</div>
+            </div>
+            <p id="instruccion-respirar" style="display:none; opacity: 0.5; margin-top: 20px;">Sincroniza tu ser con la pulsación de la luz.</p>
+            <div id="cierre-maestro"></div>
+        </div>
+    </div>
+
+    <script>
+        let audioCtx, osc;
+        const canvas = document.getElementById('canvas-manifestacion');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+
+        function initCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', initCanvas); initCanvas();
+
+        function sonar432Hz() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.frequency.setValueAtTime(432, audioCtx.currentTime);
+            g.gain.setValueAtTime(0, audioCtx.currentTime);
+            g.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 3);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start();
+        }
+
+        class Star {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + 10;
+                this.size = Math.random() * 2 + 1;
+                this.speed = Math.random() * 0.8 + 0.3;
+                this.alpha = 1;
+            }
+            update() { this.y -= this.speed; this.alpha -= 0.0015; }
+            draw() {
+                ctx.fillStyle = `rgba(243, 229, 171, ${this.alpha})`;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (stars.length < 150) stars.push(new Star());
+            stars = stars.filter(s => s.alpha > 0);
+            stars.forEach(s => { s.update(); s.draw(); });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        function iniciarManifestacion() {
+            const input = document.getElementById('decreto-input');
+            const decreto = input.value.trim();
+            if (decreto === "") return;
+            document.getElementById('contenido-input').classList.add('ocultar');
+            setTimeout(() => {
+                document.getElementById('contenido-input').style.display = 'none';
+                mostrarEnfoque(decreto);
+            }, 2000);
+            sonar432Hz();
+        }
+
+        const sentencias = [
+            "Lo que ha sido decretado en el Palacio, es ley en el mundo material.",
+            "La forma sigue al pensamiento. La coagulación ha comenzado.",
+            "Como es arriba, es abajo. Tu voluntad es ahora el eje del mundo.",
+            "El universo conspira en silencio para dar cuerpo a tu palabra.",
+            "La semilla ha sido plantada en el campo de todas las posibilidades.",
+            "Retírate en paz. Tu realidad se está reconfigurando en este instante.",
+            "Has sellado el contrato con el destino. No hay marcha atrás."
+        ];
+
+        function mostrarEnfoque(texto) {
+            const frase = document.getElementById('frase-anclada');
+            const guia = document.getElementById('guia-respiracion');
+            const instruccion = document.getElementById('instruccion-respirar');
+            const cierre = document.getElementById('cierre-maestro');
+            
+            frase.innerText = texto;
+            frase.style.display = 'block';
+            guia.style.display = 'flex';
+            guia.classList.add('animar-respiracion');
+            instruccion.style.display = 'block';
+
+            let tiempo = 300; // 5 minutos
+            const timerDisplay = document.getElementById('timer');
+
+            const intervalo = setInterval(() => {
+                let min = Math.floor(tiempo / 60);
+                let seg = tiempo % 60;
+                timerDisplay.innerText = `${min < 10 ? '0' : ''}${min}:${seg < 10 ? '0' : ''}${seg}`;
+                
+                if (tiempo <= 0) {
+                    clearInterval(intervalo);
+                    osc.stop();
+                    guia.style.display = 'none';
+                    instruccion.style.display = 'none';
+                    frase.style.opacity = '0.3';
+                    cierre.innerText = sentencias[Math.floor(Math.random() * sentencias.length)];
+                    cierre.style.display = 'block';
+                }
+                tiempo--;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
